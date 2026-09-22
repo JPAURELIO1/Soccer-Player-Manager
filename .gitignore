@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Expo / Metro build output
+.expo/
+dist/
+web-build/
+.metro-health-check*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Local environment
+.env
+.env*.local
+
+# NOTE: backend/config.php is committed on purpose so the placeholders are
+# visible in the repo. Once you fill in the real Freehostia password, either
+# uncomment the line below or reset the values before pushing.
+# backend/config.php

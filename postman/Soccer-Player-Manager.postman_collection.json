@@ -1,0 +1,426 @@
+{
+  "info": {
+    "name": "Soccer Player Manager API",
+    "description": "CRUD endpoints for the Soccer Player Manager mobile app.\n\nSetup\n-----\n1. Import this file and `Soccer-Player-Manager.postman_environment.json` into Postman.\n2. Select the \"Soccer Player Manager\" environment (top-right).\n3. Set `baseUrl` to the folder that contains players.php, with no trailing slash.\n   e.g. http://hellojpsoccer.duckdns.org\n\nOrder of use\n------------\nRun \"Health check\" first. Then \"Create player\" — it saves the new id into the\n`playerId` variable, so \"Get player by id\", \"Update player\" and \"Delete player\"\nwill work without editing anything by hand.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://hellojpsoccer.duckdns.org",
+      "type": "string"
+    },
+    {
+      "key": "playerId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/index.php",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php"
+          ]
+        },
+        "description": "Confirms PHP runs, the database credentials in config.php work, and the players table has been imported. Run this first whenever something is broken."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('database is connected', () => pm.expect(body.database.connected).to.be.true);",
+              "pm.test('players table exists', () => pm.expect(body.database.table).to.be.true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "READ - List all players",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/players.php",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('returns an array of players', () => pm.expect(body.data).to.be.an('array'));",
+              "pm.test('count matches the array length', () => pm.expect(body.count).to.eql(body.data.length));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "READ - Search players",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/players.php?search=Liverpool",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "Liverpool"
+            }
+          ]
+        },
+        "description": "Matches against name, team, position and nationality."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('every result matches the search term', () => {",
+              "  body.data.forEach((player) => {",
+              "    const haystack = [player.full_name, player.team, player.position, player.nationality].join(' ').toLowerCase();",
+              "    pm.expect(haystack).to.include('liverpool');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CREATE - Add a player",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Jude Bellingham\",\n  \"age\": 23,\n  \"jersey_number\": 5,\n  \"nationality\": \"England\",\n  \"team\": \"Real Madrid\",\n  \"position\": \"Midfielder\",\n  \"preferred_foot\": \"Right\",\n  \"height\": \"1.86\",\n  \"photo\": \"\",\n  \"description\": \"Box-to-box midfielder who arrives late in the area and finishes well. Comfortable carrying the ball through midfield under pressure.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/players.php",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ]
+        },
+        "description": "Leave `photo` empty to use the initials avatar, or send a base64 data URI such as \"data:image/jpeg;base64,/9j/4AAQ...\"."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('echoes back the stored player', () => pm.expect(body.data.full_name).to.eql('Jude Bellingham'));",
+              "pm.test('numbers come back as numbers, not strings', () => {",
+              "  pm.expect(body.data.id).to.be.a('number');",
+              "  pm.expect(body.data.age).to.be.a('number');",
+              "  pm.expect(body.data.height).to.be.a('number');",
+              "});",
+              "",
+              "// Saved so the requests below need no manual editing.",
+              "// Set it in BOTH places: an environment variable with the same name would",
+              "// otherwise override the collection one, and later requests would hit id 1.",
+              "pm.collectionVariables.set('playerId', body.data.id);",
+              "if (pm.environment.name) pm.environment.set('playerId', body.data.id);",
+              "console.log('playerId is now ' + body.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "READ - Get player by id",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/players.php?id={{playerId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "{{playerId}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('returns the requested player', () => {",
+              "  pm.expect(String(body.data.id)).to.eql(String(pm.variables.get('playerId')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "UPDATE - Edit a player",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Jude Bellingham\",\n  \"age\": 23,\n  \"jersey_number\": 10,\n  \"nationality\": \"England\",\n  \"team\": \"Real Madrid\",\n  \"position\": \"Midfielder\",\n  \"preferred_foot\": \"Right\",\n  \"height\": \"1.86\",\n  \"photo\": \"\",\n  \"description\": \"Now wearing the number 10. Box-to-box midfielder who arrives late in the area and finishes well.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/players.php?id={{playerId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "{{playerId}}"
+            }
+          ]
+        },
+        "description": "Send the whole player object. Every field is validated again, exactly as on create."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('the change was persisted', () => pm.expect(body.data.jersey_number).to.eql(10));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "VALIDATION - Rejects a bad payload",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"\",\n  \"age\": 9,\n  \"jersey_number\": 250,\n  \"nationality\": \"\",\n  \"team\": \"\",\n  \"position\": \"Striker\",\n  \"preferred_foot\": \"Both feet\",\n  \"height\": \"12\",\n  \"description\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/players.php",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ]
+        },
+        "description": "Proves the API validates independently of the mobile app: every field here breaks a rule."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+              "const body = pm.response.json();",
+              "pm.test('names the invalid fields', () => {",
+              "  ['full_name', 'age', 'jersey_number', 'nationality', 'team', 'position', 'preferred_foot', 'height', 'description']",
+              "    .forEach((field) => pm.expect(body.errors).to.have.property(field));",
+              "});",
+              "pm.test('nothing was created', () => pm.expect(body.success).to.be.false);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE - Remove a player",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/players.php?id={{playerId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "{{playerId}}"
+            }
+          ]
+        },
+        "description": "Deletes the player created earlier in this collection."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 200', () => pm.response.to.have.status(200));",
+              "pm.test('confirms the deletion', () => pm.expect(pm.response.json().success).to.be.true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE - Missing player returns 404",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/players.php?id=999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "players.php"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "999999"
+            }
+          ]
+        },
+        "description": "Run straight after the delete above to show the record is really gone."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responds with 404 Not Found', () => pm.response.to.have.status(404));",
+              "pm.test('explains what was not found', () => pm.expect(pm.response.json().message).to.include('not found'));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

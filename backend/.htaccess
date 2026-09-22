@@ -1,0 +1,52 @@
+# Freehostia runs Apache, so these rules apply automatically once uploaded.
+
+# --- Pretty URLs -----------------------------------------------------------
+# Lets you call /api/players and /api/players/7 instead of players.php?id=7.
+# The query-string form keeps working either way, so the app stays functional
+# even on a host where mod_rewrite is disabled.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Do not rewrite requests that already point at a real file or folder.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    RewriteRule ^players/?$            players.php            [QSA,L]
+    RewriteRule ^players/([0-9]+)/?$   players.php?id=$1      [QSA,L]
+</IfModule>
+
+# --- CORS preflight --------------------------------------------------------
+# PHP also sends these, but answering OPTIONS here avoids a redirect round trip.
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Accept, X-Requested-With"
+</IfModule>
+
+# --- Keep credentials private ----------------------------------------------
+<FilesMatch "^(config|db|helpers|validation)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<Files "schema.sql">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>
+
+# Base64 photos make requests larger than the stock limit.
+<IfModule mod_php.c>
+    php_value post_max_size 4M
+    php_value upload_max_filesize 4M
+</IfModule>

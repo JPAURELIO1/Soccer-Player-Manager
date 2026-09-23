@@ -1,11 +1,12 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fieldStyles } from '@/components/FormField';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, type as type_ } from '@/theme';
 
 type Props = {
   value: string | null;
@@ -59,34 +60,38 @@ export function PhotoPicker({ value, onChange }: Props) {
 
   return (
     <View style={styles.wrapper}>
-      <Text style={fieldStyles.label}>Player Picture</Text>
+      <Text style={fieldStyles.label}>Player picture</Text>
 
       <View style={styles.row}>
-        <View style={styles.preview}>
+        <LinearGradient
+          colors={[colors.ink800, colors.green700]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.preview}>
           {value ? (
             <Image source={{ uri: value }} style={styles.previewImage} contentFit="cover" />
           ) : (
-            <Ionicons name="football" size={26} color={colors.white} />
+            <Ionicons name="football" size={26} color="rgba(255,255,255,0.85)" />
           )}
-        </View>
+        </LinearGradient>
 
         <View style={styles.controls}>
           <Pressable
             onPress={pick}
             disabled={busy}
             accessibilityRole="button"
-            style={({ pressed }) => [styles.button, (pressed || busy) && { opacity: 0.7 }]}>
-            <Feather name="image" size={14} color={colors.white} />
-            <Text style={styles.buttonLabel}>{value ? 'Change Picture' : 'Add Picture'}</Text>
+            style={({ pressed }) => [styles.button, (pressed || busy) && { opacity: 0.75 }]}>
+            <Feather name="image" size={13} color={colors.white} />
+            <Text style={styles.buttonLabel}>{value ? 'Change picture' : 'Add picture'}</Text>
           </Pressable>
 
           {value ? (
-            <Pressable onPress={() => onChange(null)} accessibilityRole="button" style={styles.remove}>
+            <Pressable onPress={() => onChange(null)} accessibilityRole="button" hitSlop={6}>
               <Text style={styles.removeLabel}>Remove</Text>
             </Pressable>
-          ) : null}
-
-          <Text style={styles.hint}>Optional — leave blank to use an auto avatar</Text>
+          ) : (
+            <Text style={styles.hint}>Optional — an initials card is used instead</Text>
+          )}
         </View>
       </View>
     </View>
@@ -95,29 +100,39 @@ export function PhotoPicker({ value, onChange }: Props) {
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: spacing.lg },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   preview: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.md,
-    backgroundColor: colors.green700,
+    width: 76,
+    height: 76,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   previewImage: { width: '100%', height: '100%' },
-  controls: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
+  controls: { flex: 1, gap: spacing.sm, alignItems: 'flex-start' },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.green600,
+    backgroundColor: colors.ink,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
   },
-  buttonLabel: { color: colors.white, fontWeight: '700', fontSize: 13 },
-  remove: { paddingVertical: 2 },
-  removeLabel: { color: colors.danger, fontSize: 12, fontWeight: '600' },
-  hint: { fontSize: 11, color: colors.textFaint },
+  buttonLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 10.5,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: colors.white,
+  },
+  removeLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 10.5,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: colors.danger,
+  },
+  hint: { ...type_.caption, color: colors.textFaint },
 });

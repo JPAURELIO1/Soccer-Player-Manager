@@ -5,6 +5,7 @@ A mobile CRUD application for managing a squad of soccer players.
 | Layer | Technology |
 | --- | --- |
 | Mobile app | React Native (Expo SDK 57, Expo Router, TypeScript) |
+| UI | Design tokens in `src/theme.ts`, Bebas Neue + Inter (`@expo-google-fonts`), `react-native-svg` for the squad donut, `expo-linear-gradient` for the position cards |
 | API | PHP 8 REST endpoints returning JSON |
 | Database | MySQL / MariaDB |
 | Hosting | Freehostia (shared PHP + MySQL) |
@@ -26,11 +27,14 @@ Five screens covering the full CRUD cycle:
 
 | Screen | Purpose | API call |
 | --- | --- | --- |
-| Players | Searchable squad list, pull to refresh | `GET /players.php` |
-| Player Details | Full card for one player | `GET /players.php?id=1` |
-| Add Player | Validated form, optional photo | `POST /players.php` |
+| Squad | Squad overview strip (average age, average height, nations, position donut) above a searchable list of player cards, pull to refresh | `GET /players.php` |
+| Player Card | Full gradient card for one player | `GET /players.php?id=1` |
+| Sign Player | Validated form, optional photo | `POST /players.php` |
 | Edit Player | Same form, pre-filled | `PUT /players.php?id=1` |
 | About | App info and a live backend status indicator | — |
+
+The overview strip is computed from the players the list request already
+returned, so it costs no extra call.
 
 Delete is available from both the list card and the details screen, each behind a
 confirmation dialog.
@@ -148,6 +152,11 @@ later requests need no manual editing.
    ```
 
 3. Scan the QR code with **Expo Go** on your phone.
+
+To run it in a browser instead, use `npm run web` (or press `w` at the Expo
+prompt) and open <http://localhost:8081>. On a desktop window the app is held
+in a centred phone-width column, so the mobile layout is not stretched across
+the monitor.
 
 The About tab shows the address the app is using and whether it is connected —
 useful during a demo, and the fastest way to diagnose a blank list.

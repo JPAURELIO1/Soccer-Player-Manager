@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, noFocusRing, radius, spacing, type as type_ } from '@/theme';
 
 type Props = TextInputProps & {
   label: string;
@@ -9,8 +10,13 @@ type Props = TextInputProps & {
   hint?: string;
 };
 
-/** Labelled text input with the red asterisk and inline error from the design. */
+/**
+ * Labelled text input. The border carries the state: grey at rest, green while
+ * focused, red once the field has failed validation.
+ */
 export function FormField({ label, required, error, hint, style, ...inputProps }: Props) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>
@@ -21,7 +27,21 @@ export function FormField({ label, required, error, hint, style, ...inputProps }
       <TextInput
         placeholderTextColor={colors.placeholder}
         {...inputProps}
-        style={[styles.input, inputProps.multiline && styles.multiline, !!error && styles.inputError, style]}
+        onFocus={(event) => {
+          setFocused(true);
+          inputProps.onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          inputProps.onBlur?.(event);
+        }}
+        style={[
+          styles.input,
+          inputProps.multiline && styles.multiline,
+          focused && styles.inputFocused,
+          !!error && styles.inputError,
+          style,
+        ]}
       />
 
       {error ? (
@@ -33,10 +53,27 @@ export function FormField({ label, required, error, hint, style, ...inputProps }
   );
 }
 
+/** Shared so SelectField and PhotoPicker label themselves identically. */
 export const fieldStyles = StyleSheet.create({
-  label: { fontSize: 12, fontWeight: '700', color: colors.text, marginBottom: 6 },
+  label: { ...type_.eyebrow, color: colors.textMuted, marginBottom: 7 },
   asterisk: { color: colors.danger },
-  error: { fontSize: 11, color: colors.danger, marginTop: 4 },
+  error: {
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    lineHeight: 15,
+    color: colors.danger,
+    marginTop: 5,
+  },
+  control: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.field,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  controlFocused: { borderColor: colors.green600, backgroundColor: colors.white },
+  controlError: { borderColor: colors.danger, backgroundColor: colors.white },
 });
 
 const styles = StyleSheet.create({
@@ -44,17 +81,15 @@ const styles = StyleSheet.create({
   label: fieldStyles.label,
   asterisk: fieldStyles.asterisk,
   input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    ...fieldStyles.control,
+    fontFamily: fonts.medium,
     fontSize: 14,
     color: colors.text,
-    backgroundColor: colors.card,
+    ...noFocusRing,
   },
-  multiline: { minHeight: 96, textAlignVertical: 'top' },
-  inputError: { borderColor: colors.danger },
+  inputFocused: fieldStyles.controlFocused,
+  inputError: fieldStyles.controlError,
+  multiline: { minHeight: 104, paddingTop: spacing.md, textAlignVertical: 'top' },
   error: fieldStyles.error,
-  hint: { fontSize: 11, color: colors.textFaint, marginTop: 4 },
+  hint: { ...type_.caption, color: colors.textFaint, marginTop: 5 },
 });

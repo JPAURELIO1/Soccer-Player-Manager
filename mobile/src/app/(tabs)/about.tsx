@@ -1,11 +1,13 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Reveal } from '@/components/motion';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { SectionTitle } from '@/components/SectionTitle';
 import { API_BASE_URL } from '@/config';
 import { usePlayers } from '@/store/players';
-import { colors, radius, shadow, spacing } from '@/theme';
+import { colors, fonts, radius, shadow, spacing, type as type_ } from '@/theme';
 
 type Operation = {
   icon: React.ComponentProps<typeof Feather>['name'];
@@ -21,14 +23,14 @@ const OPERATIONS: Operation[] = [
     title: 'Create',
     body: 'Add a new soccer player to your squad.',
     tint: '#DCFCE7',
-    ink: '#16A34A',
+    ink: '#15803D',
   },
   {
     icon: 'eye',
     title: 'Read',
     body: 'Browse all players and view individual details.',
     tint: '#DBEAFE',
-    ink: '#2563EB',
+    ink: '#1D4ED8',
   },
   {
     icon: 'edit-2',
@@ -42,150 +44,180 @@ const OPERATIONS: Operation[] = [
     title: 'Delete',
     body: 'Remove a player with confirmation.',
     tint: '#FEE2E2',
-    ink: '#DC2626',
+    ink: '#B91C1C',
   },
 ];
 
 export default function AboutScreen() {
   const { status, players } = usePlayers();
 
+  const connection =
+    status === 'ready'
+      ? {
+          color: colors.green500,
+          text: `Connected · ${players.length} ${players.length === 1 ? 'record' : 'records'} loaded`,
+        }
+      : status === 'loading'
+        ? { color: colors.warning, text: 'Connecting…' }
+        : { color: colors.danger, text: 'Not reachable — pull to refresh on the Squad tab' };
+
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
+    <View style={styles.screen}>
+      <ScreenHeader title="About" subtitle="What this app is and what it talks to" />
+
       <ScrollView contentContainerStyle={styles.content}>
-        <LinearGradient
-          colors={[colors.green800, colors.green600]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="football" size={28} color={colors.white} />
-          </View>
-          <Text style={styles.heroTitle}>Soccer Player Manager</Text>
-          <Text style={styles.heroBody}>
-            A simple mobile CRUD application for managing soccer player information.
-          </Text>
-          <View style={styles.versionPill}>
-            <Text style={styles.versionText}>Version 1.0</Text>
-          </View>
-        </LinearGradient>
-
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Feather name="info" size={16} color={colors.green600} />
-            <Text style={styles.cardTitle}>App Purpose</Text>
-          </View>
-          <Text style={styles.cardBody}>
-            This prototype demonstrates a basic mobile application for managing a squad of soccer
-            players. It is built as a student project to showcase core mobile app development
-            concepts with a clean, sporty interface.
-          </Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={[styles.cardTitle, styles.cardTitleSolo]}>CRUD Operations</Text>
-          {OPERATIONS.map((operation) => (
-            <View key={operation.title} style={styles.operation}>
-              <View style={[styles.operationIcon, { backgroundColor: operation.tint }]}>
-                <Feather name={operation.icon} size={16} color={operation.ink} />
-              </View>
-              <View style={styles.operationText}>
-                <Text style={styles.operationTitle}>{operation.title}</Text>
-                <Text style={styles.operationBody}>{operation.body}</Text>
-              </View>
+        <Reveal>
+          <LinearGradient
+            colors={[colors.ink, colors.green800]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}>
+            <View style={styles.heroIcon}>
+              <Ionicons name="football" size={26} color={colors.white} />
             </View>
-          ))}
-        </View>
+            <Text style={styles.heroTitle}>Soccer Player Manager</Text>
+            <Text style={styles.heroBody}>
+              A mobile CRUD application for managing soccer player information.
+            </Text>
+            <View style={styles.versionPill}>
+              <Text style={styles.versionText}>Version 1.0</Text>
+            </View>
+          </LinearGradient>
+        </Reveal>
+
+        <Reveal delay={90} style={styles.block}>
+          <SectionTitle title="App purpose" />
+          <View style={styles.card}>
+            <Text style={styles.cardBody}>
+              This prototype demonstrates a mobile application for managing a squad of soccer
+              players. It is built as a student project to showcase core mobile app development
+              concepts with a clean, sporty interface.
+            </Text>
+          </View>
+        </Reveal>
+
+        <Reveal delay={140} style={styles.block}>
+          <SectionTitle title="CRUD operations" />
+          <View style={styles.card}>
+            {OPERATIONS.map((operation, index) => (
+              <View
+                key={operation.title}
+                style={[styles.operation, index === OPERATIONS.length - 1 && styles.operationLast]}>
+                <View style={[styles.operationIcon, { backgroundColor: operation.tint }]}>
+                  <Feather name={operation.icon} size={15} color={operation.ink} />
+                </View>
+                <View style={styles.operationText}>
+                  <Text style={styles.operationTitle}>{operation.title}</Text>
+                  <Text style={styles.operationBody}>{operation.body}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </Reveal>
 
         {/* Handy during a demo: shows at a glance that the phone is really
             talking to the hosted API rather than to local sample data. */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Feather name="server" size={16} color={colors.green600} />
-            <Text style={styles.cardTitle}>Backend Connection</Text>
-          </View>
-
-          <Text style={styles.metaLabel}>API address</Text>
-          <Text style={styles.metaValue} numberOfLines={2}>
-            {API_BASE_URL}
-          </Text>
-
-          <View style={styles.statusRow}>
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: status === 'ready' ? colors.green600 : status === 'loading' ? '#F59E0B' : colors.danger },
-              ]}
-            />
-            <Text style={styles.statusText}>
-              {status === 'ready'
-                ? `Connected · ${players.length} ${players.length === 1 ? 'record' : 'records'} loaded`
-                : status === 'loading'
-                  ? 'Connecting…'
-                  : 'Not reachable — pull to refresh on the Players tab'}
+        <Reveal delay={190} style={styles.block}>
+          <SectionTitle title="Backend connection" />
+          <View style={styles.card}>
+            <Text style={styles.metaLabel}>API address</Text>
+            <Text style={styles.metaValue} numberOfLines={2}>
+              {API_BASE_URL}
             </Text>
+
+            <View style={styles.statusRow}>
+              <View style={[styles.statusDot, { backgroundColor: connection.color }]} />
+              <Text style={styles.statusText}>{connection.text}</Text>
+            </View>
           </View>
-        </View>
+        </Reveal>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+
   hero: {
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.sm,
+    ...shadow.lifted,
   },
   heroIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.md,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    width: 54,
+    height: 54,
+    borderRadius: radius.lg,
+    backgroundColor: colors.inkFill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.inkLine,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroTitle: { color: colors.white, fontSize: 20, fontWeight: '800', textAlign: 'center' },
-  heroBody: {
-    color: colors.green100,
-    fontSize: 13,
+  heroTitle: {
+    ...type_.displayLg,
+    color: colors.white,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    marginTop: spacing.xs,
+  },
+  heroBody: {
+    fontFamily: fonts.regular,
+    fontSize: 12.5,
     lineHeight: 19,
+    color: colors.onInkMuted,
+    textAlign: 'center',
+    maxWidth: 280,
   },
   versionPill: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: colors.inkFill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.inkLine,
     paddingHorizontal: spacing.md,
     paddingVertical: 5,
     borderRadius: radius.pill,
     marginTop: spacing.xs,
   },
-  versionText: { color: colors.white, fontSize: 11, fontWeight: '700' },
+  versionText: { ...type_.eyebrow, fontSize: 9.5, color: colors.lime },
+
+  block: { marginTop: spacing.xl, gap: spacing.md },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     padding: spacing.lg,
     ...shadow.card,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
-  cardTitleSolo: { marginBottom: spacing.lg },
-  cardBody: { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+  cardBody: { ...type_.body, color: colors.textMuted },
+
   operation: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
+  operationLast: { marginBottom: 0 },
   operationIcon: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  operationText: { flex: 1, gap: 2 },
-  operationTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
-  operationBody: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
-  metaLabel: { fontSize: 11, fontWeight: '700', color: colors.textFaint, textTransform: 'uppercase' },
-  metaValue: { fontSize: 12, color: colors.text, marginTop: 2 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  operationText: { flex: 1, gap: 1 },
+  operationTitle: { ...type_.displaySm, color: colors.text, textTransform: 'uppercase' },
+  operationBody: { ...type_.caption, color: colors.textMuted },
+
+  metaLabel: { ...type_.eyebrow, fontSize: 9, color: colors.textFaint },
+  metaValue: { fontFamily: fonts.medium, fontSize: 12.5, color: colors.text, marginTop: 3 },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
   statusDot: { width: 8, height: 8, borderRadius: radius.pill },
-  statusText: { flex: 1, fontSize: 12, color: colors.textMuted },
+  statusText: { flex: 1, ...type_.caption, color: colors.textMuted },
 });

@@ -1,43 +1,50 @@
 import { Feather } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet, View, type ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 
 type IconName = React.ComponentProps<typeof Feather>['name'];
 
-/** Wraps the active icon in the light-green pill used in the prototype. */
+/** Wraps the active icon in the lime pill that marks the current tab. */
 function TabIcon({ name, color, focused }: { name: IconName; color: ColorValue; focused: boolean }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Feather name={name} size={19} color={color} />
+      <Feather name={name} size={18} color={color} />
     </View>
   );
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.green600,
-        tabBarInactiveTintColor: colors.textFaint,
+        tabBarActiveTintColor: colors.lime,
+        tabBarInactiveTintColor: colors.onInkFaint,
         tabBarLabelStyle: styles.label,
-        tabBarStyle: styles.bar,
+        // The bar is a dark slab, so it needs the safe-area inset added to its
+        // own height rather than relying on the default translucent treatment.
+        tabBarStyle: [styles.bar, { height: 62 + insets.bottom, paddingBottom: insets.bottom }],
         tabBarItemStyle: styles.item,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Players',
+          title: 'Squad',
           tabBarIcon: ({ color, focused }) => <TabIcon name="users" color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="add"
         options={{
-          title: 'Add Player',
-          tabBarIcon: ({ color, focused }) => <TabIcon name="user-plus" color={color} focused={focused} />,
+          title: 'Sign',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="user-plus" color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -53,17 +60,22 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: colors.card,
-    borderTopColor: colors.border,
-    height: 68,
+    backgroundColor: colors.ink,
+    borderTopWidth: 0,
     paddingTop: spacing.sm,
   },
-  item: { paddingVertical: spacing.xs },
-  label: { fontSize: 11, fontWeight: '600' },
+  item: { paddingVertical: 2 },
+  label: {
+    fontFamily: fonts.bold,
+    fontSize: 9.5,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginTop: 1,
+  },
   iconWrap: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: radius.pill,
   },
-  iconWrapActive: { backgroundColor: colors.green100 },
+  iconWrapActive: { backgroundColor: 'rgba(199,244,100,0.15)' },
 });

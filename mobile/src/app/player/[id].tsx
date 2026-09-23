@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -7,9 +8,11 @@ import { ApiError } from '@/api/client';
 import { getPlayer } from '@/api/players';
 import { Avatar } from '@/components/Avatar';
 import { PositionPill } from '@/components/PositionPill';
+import { Reveal } from '@/components/motion';
+import { SectionTitle } from '@/components/SectionTitle';
 import { ErrorState, LoadingState } from '@/components/StateView';
 import { usePlayers } from '@/store/players';
-import { colors, radius, shadow, spacing } from '@/theme';
+import { colors, fonts, radius, shadow, spacing, themeForPosition, type as type_ } from '@/theme';
 import type { Player } from '@/types';
 import { formatHeight } from '@/utils/format';
 
@@ -80,108 +83,158 @@ export default function PlayerDetailScreen() {
     return <LoadingState label="Loading player…" />;
   }
 
+  const tone = themeForPosition(player.position);
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
-        <Avatar name={player.full_name} position={player.position} photo={player.photo} size={88} />
-
-        <View style={styles.heroText}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{player.full_name}</Text>
-            <View style={styles.jersey}>
-              <Text style={styles.jerseyText}>{player.jersey_number}</Text>
-            </View>
+      <Reveal>
+        <LinearGradient
+          colors={[...tone.gradient]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}>
+          <View style={styles.heroTop}>
+            <Text style={styles.jersey}>
+              <Text style={styles.jerseyHash}>#</Text>
+              {player.jersey_number}
+            </Text>
+            <PositionPill position={player.position} variant="ink" />
           </View>
-          <PositionPill position={player.position} />
-          <Text style={styles.team}>{player.team}</Text>
+
+          <Avatar
+            name={player.full_name}
+            position={player.position}
+            photo={player.photo}
+            size={116}
+            ring
+            round
+            onGradient
+          />
+
+          <Text style={styles.name} numberOfLines={2}>
+            {player.full_name}
+          </Text>
+          <Text style={styles.club}>
+            {player.team} · {player.nationality}
+          </Text>
+
+          <View style={styles.heroStats}>
+            <HeroStat label="Age" value={String(player.age)} />
+            <View style={styles.heroDivider} />
+            <HeroStat label="Height" value={formatHeight(player.height).toUpperCase()} />
+            <View style={styles.heroDivider} />
+            <HeroStat label="Foot" value={player.preferred_foot} />
+          </View>
+        </LinearGradient>
+      </Reveal>
+
+      <Reveal delay={100} style={styles.block}>
+        <SectionTitle title="Scouting report" />
+        <View style={styles.card}>
+          <Text style={styles.description}>{player.description}</Text>
         </View>
-      </View>
+      </Reveal>
 
-      <View style={styles.statGrid}>
-        <Stat label="Age" value={String(player.age)} />
-        <Stat label="Height" value={formatHeight(player.height)} />
-        <Stat label="Nationality" value={player.nationality} />
-        <Stat label="Preferred Foot" value={player.preferred_foot} />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Description</Text>
-        <Text style={styles.description}>{player.description}</Text>
-      </View>
-
-      <View style={styles.actions}>
+      <Reveal delay={160} style={styles.actions}>
         <Pressable
           onPress={() => router.push(`/player/edit/${player.id}`)}
           accessibilityRole="button"
           style={({ pressed }) => [styles.button, styles.editButton, pressed && styles.pressed]}>
-          <Feather name="edit-2" size={15} color={colors.white} />
-          <Text style={styles.buttonLabel}>Edit Player</Text>
+          <Feather name="edit-2" size={14} color={colors.white} />
+          <Text style={styles.buttonLabel}>Edit player</Text>
         </Pressable>
 
         <Pressable
           onPress={confirmDelete}
           accessibilityRole="button"
           style={({ pressed }) => [styles.button, styles.deleteButton, pressed && styles.pressed]}>
-          <Feather name="trash-2" size={15} color={colors.danger} />
+          <Feather name="trash-2" size={14} color={colors.danger} />
           <Text style={[styles.buttonLabel, { color: colors.danger }]}>Delete</Text>
         </Pressable>
-      </View>
+      </Reveal>
     </ScrollView>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+    <View style={styles.heroStat}>
+      <Text style={styles.heroStatLabel}>{label}</Text>
+      <Text style={styles.heroStatValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+
   hero: {
-    flexDirection: 'row',
-    gap: spacing.lg,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    ...shadow.card,
+    gap: spacing.md,
+    ...shadow.lifted,
   },
-  heroText: { flex: 1, gap: spacing.sm, alignItems: 'flex-start' },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  name: { flexShrink: 1, fontSize: 19, fontWeight: '800', color: colors.text },
+  heroTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    marginBottom: spacing.xs,
+  },
   jersey: {
-    backgroundColor: colors.text,
-    borderRadius: radius.sm,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    fontFamily: fonts.display,
+    fontSize: 46,
+    lineHeight: 48,
+    letterSpacing: 1,
+    color: colors.white,
   },
-  jerseyText: { color: colors.white, fontSize: 12, fontWeight: '700' },
-  team: { fontSize: 13, color: colors.textMuted },
-  statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  stat: {
-    flexGrow: 1,
-    flexBasis: '47%',
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    ...shadow.card,
+  jerseyHash: { fontSize: 24, color: 'rgba(255,255,255,0.6)' },
+  name: {
+    ...type_.displayXl,
+    color: colors.white,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    marginTop: spacing.xs,
   },
-  statLabel: { fontSize: 11, fontWeight: '700', color: colors.textFaint, textTransform: 'uppercase' },
-  statValue: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 3 },
+  club: { fontFamily: fonts.medium, fontSize: 12.5, letterSpacing: 0.3, color: colors.onInkMuted },
+
+  heroStats: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    alignSelf: 'stretch',
+    marginTop: spacing.md,
+    paddingTop: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.28)',
+  },
+  heroStat: { flex: 1, alignItems: 'center', gap: 2 },
+  heroDivider: { width: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.28)' },
+  heroStatLabel: { ...type_.eyebrow, fontSize: 8.5, letterSpacing: 1.2, color: colors.onInkFaint },
+  heroStatValue: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 26,
+    letterSpacing: 0.6,
+    color: colors.white,
+    textTransform: 'uppercase',
+  },
+
+  block: { marginTop: spacing.xl, gap: spacing.md },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     padding: spacing.lg,
     ...shadow.card,
   },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
-  description: { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
-  actions: { flexDirection: 'row', gap: spacing.md },
+  description: { ...type_.body, color: colors.textMuted },
+
+  actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   button: {
     flex: 1,
     flexDirection: 'row',
@@ -189,10 +242,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.lg,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
   },
   editButton: { backgroundColor: colors.green600 },
-  deleteButton: { backgroundColor: colors.danger100 },
-  buttonLabel: { color: colors.white, fontWeight: '700', fontSize: 14 },
-  pressed: { opacity: 0.8 },
+  deleteButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  buttonLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.white,
+  },
+  pressed: { opacity: 0.85 },
 });

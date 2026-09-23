@@ -1,14 +1,14 @@
 import { Feather } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, type as type_ } from '@/theme';
 
 /** Full-screen spinner used while the first load is in flight. */
 export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color={colors.green600} />
-      <Text style={styles.body}>{label}</Text>
+      <Text style={[styles.body, { marginTop: spacing.md }]}>{label}</Text>
     </View>
   );
 }
@@ -20,7 +20,7 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <View style={styles.container}>
-      <View style={[styles.iconCircle, { backgroundColor: colors.danger100 }]}>
+      <View style={[styles.iconTile, { backgroundColor: colors.danger100 }]}>
         <Feather name="wifi-off" size={22} color={colors.danger} />
       </View>
       <Text style={styles.title}>Cannot reach the server</Text>
@@ -29,7 +29,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
         <Pressable
           onPress={onRetry}
           accessibilityRole="button"
-          style={({ pressed }) => [styles.retry, pressed && { opacity: 0.8 }]}>
+          style={({ pressed }) => [styles.retry, pressed && { opacity: 0.85 }]}>
           <Feather name="refresh-cw" size={14} color={colors.white} />
           <Text style={styles.retryLabel}>Try again</Text>
         </Pressable>
@@ -41,8 +41,8 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <View style={styles.container}>
-      <View style={[styles.iconCircle, { backgroundColor: colors.green100 }]}>
-        <Feather name="users" size={22} color={colors.green600} />
+      <View style={[styles.iconTile, { backgroundColor: colors.green100 }]}>
+        <Feather name="users" size={22} color={colors.green700} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.body}>{body}</Text>
@@ -55,28 +55,40 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.bg,
     padding: spacing.xl,
     gap: spacing.sm,
   },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.pill,
+  iconTile: {
+    width: 54,
+    height: 54,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
-  title: { fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  body: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19 },
+  title: {
+    ...type_.displayMd,
+    color: colors.text,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  body: { ...type_.body, color: colors.textMuted, textAlign: 'center', maxWidth: 320 },
   retry: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.green600,
-    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.ink,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    marginTop: spacing.md,
+    borderRadius: radius.pill,
+    marginTop: spacing.lg,
   },
-  retryLabel: { color: colors.white, fontWeight: '700', fontSize: 13 },
+  retryLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.white,
+  },
 });

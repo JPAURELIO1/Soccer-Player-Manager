@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fieldStyles } from '@/components/FormField';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, type as type_ } from '@/theme';
 
 type Props<T extends string> = {
   label: string;
@@ -41,9 +41,15 @@ export function SelectField<T extends string>({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${label}. Currently ${value || placeholder}`}
-        style={({ pressed }) => [styles.control, !!error && styles.controlError, pressed && { opacity: 0.7 }]}>
-        <Text style={value ? styles.value : styles.placeholder}>{value || placeholder}</Text>
-        <Feather name="chevron-down" size={16} color={colors.textMuted} />
+        style={({ pressed }) => [
+          styles.control,
+          !!error && fieldStyles.controlError,
+          pressed && fieldStyles.controlFocused,
+        ]}>
+        <Text style={value ? styles.value : styles.placeholder} numberOfLines={1}>
+          {value || placeholder}
+        </Text>
+        <Feather name="chevron-down" size={15} color={colors.textMuted} />
       </Pressable>
 
       {error ? <Text style={fieldStyles.error}>{error}</Text> : null}
@@ -52,7 +58,9 @@ export function SelectField<T extends string>({
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
           {/* Stops a tap inside the sheet from closing it. */}
           <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.grabber} />
             <Text style={styles.sheetTitle}>{label}</Text>
+
             {options.map((option) => {
               const selected = option === value;
               return (
@@ -62,9 +70,17 @@ export function SelectField<T extends string>({
                     onChange(option);
                     setOpen(false);
                   }}
-                  style={({ pressed }) => [styles.option, pressed && styles.optionPressed]}>
-                  <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>{option}</Text>
-                  {selected ? <Feather name="check" size={16} color={colors.green600} /> : null}
+                  style={({ pressed }) => [
+                    styles.option,
+                    selected && styles.optionSelected,
+                    pressed && styles.optionPressed,
+                  ]}>
+                  <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+                    {option}
+                  </Text>
+                  <View style={[styles.check, selected && styles.checkOn]}>
+                    {selected ? <Feather name="check" size={12} color={colors.white} /> : null}
+                  </View>
                 </Pressable>
               );
             })}
@@ -78,37 +94,58 @@ export function SelectField<T extends string>({
 const styles = StyleSheet.create({
   wrapper: { flex: 1, marginBottom: spacing.lg },
   control: {
+    ...fieldStyles.control,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.card,
+    gap: spacing.sm,
   },
-  controlError: { borderColor: colors.danger },
-  value: { fontSize: 14, color: colors.text },
-  placeholder: { fontSize: 14, color: colors.placeholder },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  value: { fontFamily: fonts.medium, fontSize: 14, color: colors.text, flexShrink: 1 },
+  placeholder: { fontFamily: fonts.regular, fontSize: 14, color: colors.placeholder, flexShrink: 1 },
+
+  backdrop: { flex: 1, backgroundColor: 'rgba(6,18,11,0.55)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.card,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-  sheetTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: spacing.sm },
+  grabber: {
+    width: 40,
+    height: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginBottom: spacing.lg,
+  },
+  sheetTitle: {
+    ...type_.displayMd,
+    color: colors.text,
+    textTransform: 'uppercase',
+    marginBottom: spacing.sm,
+  },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.xs,
   },
-  optionPressed: { backgroundColor: colors.bg },
-  optionLabel: { fontSize: 15, color: colors.text },
-  optionLabelSelected: { fontWeight: '700', color: colors.green700 },
+  optionSelected: { backgroundColor: colors.green100 },
+  optionPressed: { backgroundColor: colors.field },
+  optionLabel: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  optionLabelSelected: { fontFamily: fonts.bold, color: colors.green900 },
+  check: {
+    width: 20,
+    height: 20,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkOn: { backgroundColor: colors.green600, borderColor: colors.green600 },
 });

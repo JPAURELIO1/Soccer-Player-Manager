@@ -67,9 +67,7 @@ export default function EditPlayerScreen() {
   return (
     <View style={styles.screen}>
       <PlayerForm
-        title="Edit Player"
-        subtitle="Update this player's card"
-        submitLabel="Save Changes"
+        submitLabel="Save changes"
         initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={() => router.back()}
@@ -79,5 +77,5 @@ export default function EditPlayerScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.card },
+  screen: { flex: 1, backgroundColor: colors.bg },
 });

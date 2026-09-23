@@ -14,8 +14,9 @@ import {
 import { ApiError } from '@/api/client';
 import { FormField } from '@/components/FormField';
 import { PhotoPicker } from '@/components/PhotoPicker';
+import { SectionTitle } from '@/components/SectionTitle';
 import { SelectField } from '@/components/SelectField';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, shadow, spacing, type as type_ } from '@/theme';
 import {
   POSITIONS,
   PREFERRED_FEET,
@@ -26,23 +27,18 @@ import {
 import { validatePlayerForm, type FormErrors } from '@/utils/validation';
 
 type Props = {
-  title: string;
-  subtitle: string;
   submitLabel: string;
   initialValues: PlayerFormValues;
   onSubmit: (values: PlayerFormValues) => Promise<void>;
   onCancel?: () => void;
 };
 
-/** The Add and Edit screens are the same form with different copy and handlers. */
-export function PlayerForm({
-  title,
-  subtitle,
-  submitLabel,
-  initialValues,
-  onSubmit,
-  onCancel,
-}: Props) {
+/**
+ * The Add and Edit screens are the same form with different copy and handlers.
+ * Fields are grouped into three cards so the sheet does not read as one long
+ * column of inputs.
+ */
+export function PlayerForm({ submitLabel, initialValues, onSubmit, onCancel }: Props) {
   const [values, setValues] = useState<PlayerFormValues>(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -90,9 +86,6 @@ export function PlayerForm({
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
-
         {formError ? (
           <View style={styles.banner}>
             <Feather name="alert-circle" size={15} color={colors.danger} />
@@ -100,104 +93,113 @@ export function PlayerForm({
           </View>
         ) : null}
 
-        <FormField
-          label="Full Name"
-          required
-          value={values.full_name}
-          onChangeText={(text) => setField('full_name', text)}
-          placeholder="e.g. Lionel Messi"
-          autoCapitalize="words"
-          error={errors.full_name}
-        />
+        <SectionTitle title="Identity" />
+        <View style={styles.card}>
+          <FormField
+            label="Full name"
+            required
+            value={values.full_name}
+            onChangeText={(text) => setField('full_name', text)}
+            placeholder="e.g. Lionel Messi"
+            autoCapitalize="words"
+            error={errors.full_name}
+          />
 
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <FormField
-              label="Age"
-              required
-              value={values.age}
-              onChangeText={(text) => setField('age', text.replace(/[^0-9]/g, ''))}
-              placeholder="e.g. 28"
-              keyboardType="number-pad"
-              maxLength={2}
-              error={errors.age}
-            />
-          </View>
-          <View style={styles.half}>
-            <FormField
-              label="Jersey Number"
-              required
-              value={values.jersey_number}
-              onChangeText={(text) => setField('jersey_number', text.replace(/[^0-9]/g, ''))}
-              placeholder="1-99"
-              keyboardType="number-pad"
-              maxLength={2}
-              error={errors.jersey_number}
-            />
+          <View style={styles.row}>
+            <View style={styles.half}>
+              <FormField
+                label="Age"
+                required
+                value={values.age}
+                onChangeText={(text) => setField('age', text.replace(/[^0-9]/g, ''))}
+                placeholder="e.g. 28"
+                keyboardType="number-pad"
+                maxLength={2}
+                error={errors.age}
+              />
+            </View>
+            <View style={styles.half}>
+              <FormField
+                label="Jersey number"
+                required
+                value={values.jersey_number}
+                onChangeText={(text) => setField('jersey_number', text.replace(/[^0-9]/g, ''))}
+                placeholder="1-99"
+                keyboardType="number-pad"
+                maxLength={2}
+                error={errors.jersey_number}
+              />
+            </View>
           </View>
         </View>
 
-        <FormField
-          label="Nationality"
-          required
-          value={values.nationality}
-          onChangeText={(text) => setField('nationality', text)}
-          placeholder="e.g. Argentina"
-          autoCapitalize="words"
-          error={errors.nationality}
-        />
-
-        <FormField
-          label="Team"
-          required
-          value={values.team}
-          onChangeText={(text) => setField('team', text)}
-          placeholder="e.g. Inter Miami"
-          autoCapitalize="words"
-          error={errors.team}
-        />
-
-        <View style={styles.row}>
-          <SelectField<Position>
-            label="Position"
+        <SectionTitle title="Club & role" />
+        <View style={styles.card}>
+          <FormField
+            label="Nationality"
             required
-            value={values.position}
-            options={POSITIONS}
-            onChange={(option) => setField('position', option)}
-            error={errors.position}
+            value={values.nationality}
+            onChangeText={(text) => setField('nationality', text)}
+            placeholder="e.g. Argentina"
+            autoCapitalize="words"
+            error={errors.nationality}
           />
-          <SelectField<PreferredFoot>
-            label="Preferred Foot"
+
+          <FormField
+            label="Team"
             required
-            value={values.preferred_foot}
-            options={PREFERRED_FEET}
-            onChange={(option) => setField('preferred_foot', option)}
-            error={errors.preferred_foot}
+            value={values.team}
+            onChangeText={(text) => setField('team', text)}
+            placeholder="e.g. Inter Miami"
+            autoCapitalize="words"
+            error={errors.team}
+          />
+
+          <View style={styles.row}>
+            <SelectField<Position>
+              label="Position"
+              required
+              value={values.position}
+              options={POSITIONS}
+              onChange={(option) => setField('position', option)}
+              error={errors.position}
+            />
+            <SelectField<PreferredFoot>
+              label="Preferred foot"
+              required
+              value={values.preferred_foot}
+              options={PREFERRED_FEET}
+              onChange={(option) => setField('preferred_foot', option)}
+              error={errors.preferred_foot}
+            />
+          </View>
+
+          <FormField
+            label="Height"
+            required
+            value={values.height}
+            onChangeText={(text) => setField('height', text)}
+            placeholder="e.g. 1.70 m"
+            keyboardType="decimal-pad"
+            error={errors.height}
           />
         </View>
 
-        <FormField
-          label="Height"
-          required
-          value={values.height}
-          onChangeText={(text) => setField('height', text)}
-          placeholder="e.g. 1.70 m"
-          keyboardType="decimal-pad"
-          error={errors.height}
-        />
+        <SectionTitle title="Player profile" />
+        <View style={styles.card}>
+          <PhotoPicker value={values.photo} onChange={(photo) => setField('photo', photo)} />
 
-        <PhotoPicker value={values.photo} onChange={(photo) => setField('photo', photo)} />
-
-        <FormField
-          label="Description"
-          required
-          value={values.description}
-          onChangeText={(text) => setField('description', text)}
-          placeholder="Write player background, strengths or stats..."
-          multiline
-          numberOfLines={5}
-          error={errors.description}
-        />
+          <FormField
+            label="Description"
+            required
+            value={values.description}
+            onChangeText={(text) => setField('description', text)}
+            placeholder="Write player background, strengths or stats…"
+            multiline
+            numberOfLines={5}
+            error={errors.description}
+          />
+        </View>
 
         <Pressable
           onPress={handleSubmit}
@@ -208,7 +210,7 @@ export function PlayerForm({
             <ActivityIndicator color={colors.white} />
           ) : (
             <>
-              <Feather name="check" size={16} color={colors.white} />
+              <Feather name="check" size={15} color={colors.white} />
               <Text style={styles.submitLabel}>{submitLabel}</Text>
             </>
           )}
@@ -230,22 +232,36 @@ export function PlayerForm({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { fontSize: 24, fontWeight: '800', color: colors.text },
-  subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2, marginBottom: spacing.xl },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.danger100,
     borderRadius: radius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.danger,
     padding: spacing.md,
-    marginBottom: spacing.lg,
   },
-  bannerText: { flex: 1, color: colors.danger, fontSize: 12, fontWeight: '600' },
+  bannerText: { flex: 1, ...type_.bodyStrong, fontSize: 12, color: colors.danger },
+
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    // Each field carries its own bottom margin, which forms the card's inner
+    // bottom padding — hence none here.
+    paddingBottom: 0,
+    marginBottom: spacing.sm,
+    ...shadow.card,
+  },
   row: { flexDirection: 'row', gap: spacing.md },
   half: { flex: 1 },
-  dimmed: { opacity: 0.8 },
+
+  dimmed: { opacity: 0.85 },
   submit: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -253,10 +269,24 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.green600,
     paddingVertical: spacing.lg,
-    borderRadius: radius.md,
-    minHeight: 50,
+    borderRadius: radius.pill,
+    minHeight: 52,
+    marginTop: spacing.md,
+    ...shadow.card,
   },
-  submitLabel: { color: colors.white, fontWeight: '700', fontSize: 15 },
+  submitLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+    color: colors.white,
+  },
   cancel: { alignItems: 'center', paddingVertical: spacing.lg },
-  cancelLabel: { color: colors.textMuted, fontWeight: '600', fontSize: 14 },
+  cancelLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+  },
 });

@@ -2,18 +2,20 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { getPlayer } from '@/api/players';
 import { Avatar } from '@/components/Avatar';
 import { PositionPill } from '@/components/PositionPill';
 import { Reveal } from '@/components/motion';
+import { PlayerNation } from '@/components/NationCard';
 import { SectionTitle } from '@/components/SectionTitle';
 import { ErrorState, LoadingState } from '@/components/StateView';
 import { usePlayers } from '@/store/players';
 import { colors, fonts, radius, shadow, spacing, themeForPosition, type as type_ } from '@/theme';
 import type { Player } from '@/types';
+import { confirmDestructive, notify } from '@/utils/dialog';
 import { formatHeight } from '@/utils/format';
 
 export default function PlayerDetailScreen() {
@@ -59,21 +61,19 @@ export default function PlayerDetailScreen() {
 
   function confirmDelete() {
     if (!player) return;
-    Alert.alert('Delete player?', `${player.full_name} will be removed from the squad.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove(player.id);
-            router.back();
-          } catch {
-            Alert.alert('Could not delete', 'The server did not accept the request. Please try again.');
-          }
-        },
+    confirmDestructive(
+      'Delete player?',
+      `${player.full_name} will be removed from the squad.`,
+      'Delete',
+      async () => {
+        try {
+          await remove(player.id);
+          router.back();
+        } catch {
+          notify('Could not delete', 'The server did not accept the request. Please try again.');
+        }
       },
-    ]);
+    );
   }
 
   if (error) {
@@ -133,6 +133,15 @@ export default function PlayerDetailScreen() {
         <View style={styles.card}>
           <Text style={styles.description}>{player.description}</Text>
         </View>
+      </Reveal>
+
+      {/* Third-party data: the player's nation, looked up on REST Countries. */}
+      <Reveal delay={130} style={styles.block}>
+        <SectionTitle title="Nation" />
+        <PlayerNation
+          nationality={player.nationality}
+          onOpen={(country) => router.push(`/nation/${country.code}`)}
+        />
       </Reveal>
 
       <Reveal delay={160} style={styles.actions}>

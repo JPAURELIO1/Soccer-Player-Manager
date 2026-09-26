@@ -16,3 +16,16 @@ export function formatHeight(height: number) {
 export function subtitleFor(player: Player) {
   return `Age ${player.age} · ${player.nationality}`;
 }
+
+/** 214211951 -> "214.2M", 5401 -> "5.4K". */
+export function formatCompact(value: number) {
+  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+  return String(value);
+}
+
+/** 214211951 -> "214,211,951". */
+export function formatThousands(value: number) {
+  return value.toLocaleString('en-US');
+}

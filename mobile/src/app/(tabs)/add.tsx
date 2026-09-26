@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { PlayerForm } from '@/components/PlayerForm';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { usePlayers } from '@/store/players';
 import { colors } from '@/theme';
 import { emptyPlayerForm, type PlayerFormValues } from '@/types';
+import { notify } from '@/utils/dialog';
 
 export default function AddPlayerScreen() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function AddPlayerScreen() {
     // stacking a second copy of it on top.
     router.navigate('/');
 
-    Alert.alert('Player signed', `${created.full_name} is now in your squad.`);
+    notify('Player signed', `${created.full_name} is now in your squad.`);
   }
 
   return (

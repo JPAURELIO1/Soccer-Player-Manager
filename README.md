@@ -1,10 +1,19 @@
 # Soccer Player Manager
 
-A mobile CRUD application for managing a squad of soccer players.
+A mobile CRUD application for managing a squad of soccer players, enriched with
+live country data from a third-party public API.
+
+## APIs used
+
+| API | URL | Used for |
+| --- | --- | --- |
+| **Custom REST API** (self-hosted PHP + MySQL) | `http://hellojpsoccer.duckdns.org/players.php` | Full CRUD on players: `GET`, `POST`, `PUT`, `DELETE` |
+| **Third-party API: REST Countries v5** | **<https://api.restcountries.com/countries/v5>** ([docs](https://restcountries.com/docs/countries)) | Flag + country facts on every Player Card, and the live country search on the Nations tab |
 
 | Layer | Technology |
 | --- | --- |
 | Mobile app | React Native (Expo SDK 57, Expo Router, TypeScript) |
+| Third-party API | [REST Countries v5](https://restcountries.com), called directly from the app with a bearer key |
 | UI | Design tokens in `src/theme.ts`, Bebas Neue + Inter (`@expo-google-fonts`), `react-native-svg` for the squad donut, `expo-linear-gradient` for the position cards |
 | API | PHP 8 REST endpoints returning JSON |
 | Database | MySQL / MariaDB |
@@ -14,7 +23,7 @@ A mobile CRUD application for managing a squad of soccer players.
 
 ```
 Soccer-Player-Manager/
-├── mobile/     Expo app — run with `npx expo start`
+├── mobile/     Expo app — run with `npx expo start` (REST Countries client in src/api/countries.ts)
 ├── backend/    PHP API — upload to Freehostia's public_html/api
 └── postman/    Collection + environment to import into Postman
 ```
@@ -23,15 +32,17 @@ Soccer-Player-Manager/
 
 ## What the app does
 
-Five screens covering the full CRUD cycle:
+Seven screens covering the full CRUD cycle plus the third-party integration:
 
 | Screen | Purpose | API call |
 | --- | --- | --- |
 | Squad | Squad overview strip (average age, average height, nations, position donut) above a searchable list of player cards, pull to refresh | `GET /players.php` |
-| Player Card | Full gradient card for one player | `GET /players.php?id=1` |
+| Player Card | Full gradient card for one player, plus a **Nation** panel with the player's flag, capital, region, population, languages and currency | `GET /players.php?id=1` + REST Countries lookup |
 | Sign Player | Validated form, optional photo | `POST /players.php` |
 | Edit Player | Same form, pre-filled | `PUT /players.php?id=1` |
-| About | App info and a live backend status indicator | — |
+| Nations | Live search over every country in REST Countries; quick-pick chips for the nations already in your squad | REST Countries `GET /name?q=` |
+| Nation | One country's facts and timezones, plus the squad players from that country (joins both APIs) | REST Countries `GET /codes.alpha_2/{code}` |
+| About | App info and live status indicators for both APIs | both |
 
 The overview strip is computed from the players the list request already
 returned, so it costs no extra call.
@@ -161,6 +172,25 @@ the monitor.
 The About tab shows the address the app is using and whether it is connected —
 useful during a demo, and the fastest way to diagnose a blank list.
 
+### 6. Set up the REST Countries key
+
+REST Countries v5 needs a free API key (the older keyless v3.1 endpoints are
+shut down).
+
+1. Create an account at <https://restcountries.com/sign-up> and create a key.
+2. Put it in `mobile/src/config.ts`:
+
+   ```ts
+   export const COUNTRIES_API_KEY = 'rc_live_…';
+   ```
+
+3. **Browser only:** at <https://restcountries.com/api-keys>, add `localhost`
+   to the key's CORS allowed origins. Without it every lookup in the web build
+   fails with *"This browser address is not allowed…"*. Expo Go on a phone
+   sends no browser origin, so it works without this step.
+
+The About tab's **Third-party API** card turns green once the key works.
+
 ---
 
 ## Troubleshooting
@@ -193,6 +223,13 @@ Copy `backend/` into `C:\xampp\htdocs\soccer-api`, start Apache and MySQL, and
 import `schema.sql` through phpMyAdmin. Set `API_BASE_URL` to your PC's **LAN
 IP** — `http://192.168.1.10/soccer-api`, from `ipconfig` — not `localhost`,
 which on a phone points at the phone itself.
+
+**The Nation panel says "no country called …"**
+The player's Nationality is looked up by country name, then by partial name,
+then by demonym, so `Brazil`, `Korea` and `Brazilian` all resolve. England,
+Scotland, Wales and Northern Ireland map to the United Kingdom, since REST
+Countries only lists sovereign states. Anything else needs a real country
+name — edit the player.
 
 **A saved photo makes requests slow**
 Photos are stored as base64 text inside the player record, so a large image
@@ -254,3 +291,43 @@ is also callable directly from Postman.
 ```
 
 The app reads `errors` and shows each message under its own input.
+
+---
+
+## Third-party API reference: REST Countries v5
+
+Base URL: **<https://api.restcountries.com/countries/v5>**, with the key sent
+as `Authorization: Bearer <key>`. Client code lives in
+`mobile/src/api/countries.ts`.
+
+| Method | Path | Used by |
+| --- | --- | --- |
+| `GET` | `/names.common/{name}` | Player Card: exact match on the player's nationality |
+| `GET` | `/name?q={text}&limit=25` | Nations tab live search; fallback for partial names |
+| `GET` | `/demonyms?q={text}` | Player Card fallback, so "Brazilian" finds Brazil |
+| `GET` | `/codes.alpha_2/{code}` | Nation screen, and the About tab's connection check |
+
+Every request sends `response_fields=` so only the fields the app shows come
+back. Each country is fetched at most once per session, which keeps the app
+well under the free plan's 20-requests-per-10-seconds limit.
+
+Trimmed example, `GET /names.common/Brazil`:
+
+```json
+{
+  "data": {
+    "objects": [{
+      "names": { "common": "Brazil", "official": "Federative Republic of Brazil" },
+      "codes": { "alpha_2": "BR", "fifa": "BRA" },
+      "flag": { "emoji": "🇧🇷", "url_png": "https://flags.restcountries.com/v5/w640/br.png" },
+      "capitals": [{ "name": "Brasília", "attributes": { "primary": true } }],
+      "region": "Americas",
+      "subregion": "South America",
+      "population": 214211951,
+      "languages": [{ "name": "Portuguese" }],
+      "currencies": [{ "code": "BRL", "name": "Brazilian real", "symbol": "R$" }]
+    }],
+    "meta": { "total": 1, "count": 1 }
+  }
+}
+```

@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PlayerCard } from '@/components/PlayerCard';
 import { Reveal } from '@/components/motion';
@@ -12,6 +12,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/StateView';
 import { usePlayers } from '@/store/players';
 import { colors, fonts, noFocusRing, radius, shadow, spacing, type as type_ } from '@/theme';
 import type { Player } from '@/types';
+import { confirmDestructive, notify } from '@/utils/dialog';
 
 export default function PlayersScreen() {
   const router = useRouter();
@@ -33,23 +34,17 @@ export default function PlayersScreen() {
   }, [players, term]);
 
   function confirmDelete(player: Player) {
-    Alert.alert(
+    confirmDestructive(
       'Delete player?',
       `${player.full_name} will be removed from the squad. This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await remove(player.id);
-            } catch {
-              Alert.alert('Could not delete', 'The server did not accept the request. Please try again.');
-            }
-          },
-        },
-      ],
+      'Delete',
+      async () => {
+        try {
+          await remove(player.id);
+        } catch {
+          notify('Could not delete', 'The server did not accept the request. Please try again.');
+        }
+      },
     );
   }
 

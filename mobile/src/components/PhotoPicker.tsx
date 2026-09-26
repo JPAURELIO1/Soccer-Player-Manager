@@ -3,10 +3,11 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fieldStyles } from '@/components/FormField';
 import { colors, fonts, radius, spacing, type as type_ } from '@/theme';
+import { notify } from '@/utils/dialog';
 
 type Props = {
   value: string | null;
@@ -26,7 +27,7 @@ export function PhotoPicker({ value, onChange }: Props) {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
+        notify(
           'Permission needed',
           'Allow photo access in Settings to attach a player picture, or leave it blank to use an initials avatar.',
         );
@@ -45,14 +46,14 @@ export function PhotoPicker({ value, onChange }: Props) {
 
       const asset = result.assets[0];
       if (!asset.base64) {
-        Alert.alert('Could not read that image', 'Please try a different picture.');
+        notify('Could not read that image', 'Please try a different picture.');
         return;
       }
 
       const mime = asset.mimeType ?? 'image/jpeg';
       onChange(`data:${mime};base64,${asset.base64}`);
     } catch {
-      Alert.alert('Could not open the photo library', 'Please try again.');
+      notify('Could not open the photo library', 'Please try again.');
     } finally {
       setBusy(false);
     }

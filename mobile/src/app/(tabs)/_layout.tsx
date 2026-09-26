@@ -48,6 +48,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="nations"
+        options={{
+          title: 'Nations',
+          tabBarIcon: ({ color, focused }) => <TabIcon name="globe" color={color} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="about"
         options={{
           title: 'About',

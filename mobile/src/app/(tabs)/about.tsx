@@ -1,11 +1,14 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ApiError } from '@/api/client';
+import { getCountryByCode } from '@/api/countries';
 import { Reveal } from '@/components/motion';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionTitle } from '@/components/SectionTitle';
-import { API_BASE_URL } from '@/config';
+import { API_BASE_URL, COUNTRIES_API_URL } from '@/config';
 import { usePlayers } from '@/store/players';
 import { colors, fonts, radius, shadow, spacing, type as type_ } from '@/theme';
 
@@ -61,6 +64,32 @@ export default function AboutScreen() {
         ? { color: colors.warning, text: 'Connecting…' }
         : { color: colors.danger, text: 'Not reachable — pull to refresh on the Squad tab' };
 
+  // One cheap lookup proves the key, CORS and network are all fine.
+  const [countries, setCountries] = useState<{ color: string; text: string }>({
+    color: colors.warning,
+    text: 'Checking…',
+  });
+  useEffect(() => {
+    let active = true;
+    getCountryByCode('PH')
+      .then((country) => {
+        if (active) {
+          setCountries({ color: colors.green500, text: `Connected · sample lookup returned ${country.name}` });
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setCountries({
+            color: colors.danger,
+            text: err instanceof ApiError ? err.message : 'Not reachable',
+          });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <View style={styles.screen}>
       <ScreenHeader title="About" subtitle="What this app is and what it talks to" />
@@ -77,7 +106,8 @@ export default function AboutScreen() {
             </View>
             <Text style={styles.heroTitle}>Soccer Player Manager</Text>
             <Text style={styles.heroBody}>
-              A mobile CRUD application for managing soccer player information.
+              A mobile CRUD application for managing soccer player information, with live country
+              data from the REST Countries API.
             </Text>
             <View style={styles.versionPill}>
               <Text style={styles.versionText}>Version 1.0</Text>
@@ -118,7 +148,7 @@ export default function AboutScreen() {
         {/* Handy during a demo: shows at a glance that the phone is really
             talking to the hosted API rather than to local sample data. */}
         <Reveal delay={190} style={styles.block}>
-          <SectionTitle title="Backend connection" />
+          <SectionTitle title="Custom REST API" />
           <View style={styles.card}>
             <Text style={styles.metaLabel}>API address</Text>
             <Text style={styles.metaValue} numberOfLines={2}>
@@ -128,6 +158,27 @@ export default function AboutScreen() {
             <View style={styles.statusRow}>
               <View style={[styles.statusDot, { backgroundColor: connection.color }]} />
               <Text style={styles.statusText}>{connection.text}</Text>
+            </View>
+          </View>
+        </Reveal>
+
+        <Reveal delay={240} style={styles.block}>
+          <SectionTitle title="Third-party API" />
+          <View style={styles.card}>
+            <Text style={[styles.operationTitle, { marginBottom: spacing.xs }]}>REST Countries</Text>
+            <Text style={styles.cardBody}>
+              Supplies the flag and country facts on every Player Card, and the live search on the
+              Nations tab.
+            </Text>
+
+            <Text style={[styles.metaLabel, { marginTop: spacing.md }]}>API address</Text>
+            <Text style={styles.metaValue} numberOfLines={2}>
+              {COUNTRIES_API_URL}
+            </Text>
+
+            <View style={styles.statusRow}>
+              <View style={[styles.statusDot, { backgroundColor: countries.color }]} />
+              <Text style={styles.statusText}>{countries.text}</Text>
             </View>
           </View>
         </Reveal>
